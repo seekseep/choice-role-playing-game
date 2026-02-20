@@ -110,12 +110,8 @@ function validateMoves(event, validMoves) {
   return event;
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { state, terrain, placeId, world, history } = req.body;
+export async function POST(request) {
+  const { state, terrain, placeId, world, history } = await request.json();
   const validMoves = computeValidMoves(state.position, world);
   const prompt = buildPrompt(state, terrain, placeId, validMoves, history);
 
@@ -133,5 +129,5 @@ export default async function handler(req, res) {
 
   validateMoves(event, validMoves);
 
-  return res.status(200).json(event);
+  return Response.json(event);
 }

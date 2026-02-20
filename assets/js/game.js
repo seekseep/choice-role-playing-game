@@ -49,7 +49,7 @@ export async function fetchEvent(game) {
   const { state, world } = game;
   const place = world.grid[state.position.y][state.position.x];
 
-  const response = await fetch('/api/generate-event', {
+  const response = await fetch('/api/events', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
