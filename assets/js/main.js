@@ -46,12 +46,12 @@ function startGame() {
   stepsContainer.appendChild(fragment);
 }
 
-async function onGameStart() {
+async function onGameStart({ width, height }) {
   showLoading('ゲームを生成中...');
   const response = await fetch(new URL('/api/games', window.location.origin), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ width: 4, height: 4 }),
+    body: JSON.stringify({ width, height }),
   });
   game = await response.json();
   hideLoading();

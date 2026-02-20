@@ -1,10 +1,15 @@
 export function createStartStep(template, { onStart }) {
   const fragment = template.content.cloneNode(true);
 
+  const widthInput = fragment.querySelector('.map-width');
+  const heightInput = fragment.querySelector('.map-height');
   const startButton = fragment.querySelector('.start-button');
   startButton.addEventListener('click', () => {
     startButton.disabled = true;
-    onStart();
+    onStart({
+      width: parseInt(widthInput.value, 10),
+      height: parseInt(heightInput.value, 10),
+    });
   });
 
   return fragment;
