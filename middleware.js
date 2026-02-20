@@ -1,6 +1,10 @@
 export default function middleware(request) {
-  const username = process.env.BASIC_AUTH_USER;
-  const password = process.env.BASIC_AUTH_PASSWORD;
+  if (new URL(request.url).pathname === '/robots.txt') {
+    return;
+  }
+
+  const username = process.env.BASIC_AUTH_USER?.trim();
+  const password = process.env.BASIC_AUTH_PASSWORD?.trim();
 
   if (!username || !password) {
     return;
@@ -24,7 +28,3 @@ export default function middleware(request) {
     headers: { 'WWW-Authenticate': 'Basic realm="Protected"' },
   });
 }
-
-export const config = {
-  matcher: ['/((?!robots\\.txt).*)'],
-};
