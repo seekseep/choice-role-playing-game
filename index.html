@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <title>Choice Role-Playing Game</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+
+    <div class="container">
+      <div class="py-4">
+        <h1>Choice Role-Playing Game</h1>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div id="steps-container"></div>
+        </div>
+        <div class="col-4">
+          <div class="card sticky-top" style="top: 1rem;">
+            <canvas id="map-canvas" width="200" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template id="start-step-template">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="card-title mb-3">冒険の始まり</h2>
+          <button class="btn btn-primary start-button">冒険を始める</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="action-step-template">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col"><span>♥️</span><span class="state-hit-point"></span></div>
+            <div class="col"><span>💰️</span><span class="state-money"></span></div>
+            <div class="col"><span>⭐️</span><span class="state-score"></span></div>
+          </div>
+          <p class="card-text text-muted mb-2 message"></p>
+          <h2 class="card-title mb-4 question"></h2>
+          <div class="d-flex flex-column gap-2 choices">
+            <button class="text-start btn btn-outline-secondary d-block choice-button"></button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="end-step-template">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col"><span>♥️</span><span class="state-hit-point"></span></div>
+            <div class="col"><span>💰️</span><span class="state-money"></span></div>
+            <div class="col"><span>⭐️</span><span class="state-score"></span></div>
+          </div>
+          <h2 class="card-title mb-3 result-message"></h2>
+          <p class="card-text text-muted mb-3 result-detail"></p>
+          <button class="btn btn-primary retry-button">やりなおす</button>
+        </div>
+      </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="./assets/js/main.js"></script>
+  </body>
+</html>
