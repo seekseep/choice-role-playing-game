@@ -1,27 +1,9 @@
-import { createState, createGame, createStep } from './factory.js';
-
-export function initialize(world, initialStatus) {
-  const state = createState({
-    hitPoint: initialStatus.hitPoint,
-    money: initialStatus.money,
-    score: initialStatus.score,
-    position: { x: world.start.x, y: world.start.y },
-  });
-
-  return createGame({ world, state });
-}
-
 export function apply(game, choiceId) {
   const choice = game.currentEvent.choices.find((c) => c.id === choiceId);
 
   game.steps[game.steps.length - 1].selectedChoiceId = choiceId;
 
-  game.history.push({
-    message: game.currentEvent.message,
-    chosenLabel: choice.label,
-  });
-
-  const delta = choice.result.delta;
+  const { delta } = choice.result;
   game.state.hitPoint += delta.hitPoint;
   game.state.money += delta.money;
   game.state.score += delta.score;
@@ -45,11 +27,20 @@ export function apply(game, choiceId) {
   return game;
 }
 
+function getHistory(steps) {
+  return steps
+    .filter(s => s.selectedChoiceId)
+    .map(s => ({
+      message: s.message,
+      chosenContent: s.choices.find(c => c.id === s.selectedChoiceId).content,
+    }));
+}
+
 export async function fetchEvent(game) {
   const { state, world } = game;
-  const place = world.grid[state.position.y][state.position.x];
+  const place = world.areas[state.position.y][state.position.x];
 
-  const response = await fetch('/api/events', {
+  const response = await fetch(new URL('/api/events', window.location.origin), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -57,15 +48,21 @@ export async function fetchEvent(game) {
       terrain: place.terrain,
       placeId: place.id,
       world: { width: world.width, height: world.height, start: world.start, goal: world.goal },
-      history: game.history,
+      history: getHistory(game.steps),
     }),
   });
 
   const event = await response.json();
-  const step = createStep({ ...event, stateView: game.state });
 
   game.currentEvent = event;
-  game.steps.push(step);
+  game.steps.push({
+    emoji: event.emoji,
+    message: event.message,
+    question: event.question,
+    choices: event.choices.map(({ id, emoji, content }) => ({ id, emoji, content })),
+    stateView: { ...state },
+    selectedChoiceId: null,
+  });
 
   return game;
 }

@@ -1,6 +1,5 @@
-import { WORLD, INITIAL_STATUS } from './data.js';
 import { renderWorldMap } from './worldMap.js';
-import { initialize, apply, fetchEvent } from './game.js';
+import { apply, fetchEvent } from './game.js';
 import {
   createStartStep,
   createActionStep,
@@ -8,39 +7,59 @@ import {
 } from './step.js';
 
 const canvas = document.getElementById('map-canvas');
+const playerStatus = document.getElementById('player-status');
+const statusHitPoint = document.getElementById('status-hit-point');
+const statusMoney = document.getElementById('status-money');
+const statusScore = document.getElementById('status-score');
 const stepsContainer = document.getElementById('steps-container');
+const loadingIndicator = document.getElementById('loading-indicator');
+const loadingMessage = loadingIndicator.querySelector('.loading-message');
 const startStepTemplate = document.getElementById('start-step-template');
 const actionStepTemplate = document.getElementById('action-step-template');
 const endStepTemplate = document.getElementById('end-step-template');
 
-let game = initialize(WORLD, INITIAL_STATUS);
+let game = null;
+
+function renderStatus(state) {
+  playerStatus.classList.remove('d-none');
+  statusHitPoint.textContent = state.hitPoint;
+  statusMoney.textContent = state.money;
+  statusScore.textContent = state.score;
+}
 
 function scrollToBottom() {
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-function showLoading() {
-  const div = document.createElement('div');
-  div.id = 'loading-indicator';
-  div.className = 'card mb-4';
-  div.innerHTML = '<div class="card-body text-center"><div class="spinner-border" role="status"></div><p class="mt-2 text-muted">イベントを生成中...</p></div>';
-  stepsContainer.appendChild(div);
+function showLoading(message) {
+  loadingMessage.textContent = message;
+  loadingIndicator.classList.remove('d-none');
   scrollToBottom();
 }
 
 function hideLoading() {
-  const el = document.getElementById('loading-indicator');
-  if (el) el.remove();
+  loadingIndicator.classList.add('d-none');
 }
 
 function startGame() {
-  game = initialize(WORLD, INITIAL_STATUS);
   const fragment = createStartStep(startStepTemplate, { onStart: onGameStart });
   stepsContainer.appendChild(fragment);
 }
 
 async function onGameStart() {
-  showLoading();
+  showLoading('ゲームを生成中...');
+  const response = await fetch(new URL('/api/games', window.location.origin), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ width: 4, height: 4 }),
+  });
+  game = await response.json();
+  hideLoading();
+
+  renderWorldMap(canvas, game.world, game.state.position);
+  renderStatus(game.state);
+
+  showLoading('イベントを生成中...');
   await fetchEvent(game);
   hideLoading();
   renderCurrentStep();
@@ -55,10 +74,14 @@ function renderCurrentStep() {
   });
   stepsContainer.appendChild(fragment);
   renderWorldMap(canvas, game.world, game.state.position);
+  renderStatus(game.state);
   scrollToBottom();
 }
 
-async function onChoiceSelected(choiceId) {
+async function onChoiceSelected(choiceId, showResult) {
+  const choice = game.currentEvent.choices.find((c) => c.id === choiceId);
+  showResult({ message: choice.result.message, delta: choice.result.delta });
+
   game = apply(game, choiceId);
 
   if (game.status === 'end') {
@@ -71,11 +94,12 @@ async function onChoiceSelected(choiceId) {
       },
     });
     stepsContainer.appendChild(fragment);
+    renderStatus(game.state);
     scrollToBottom();
     return;
   }
 
-  showLoading();
+  showLoading('イベントを生成中...');
   await fetchEvent(game);
   hideLoading();
   renderCurrentStep();

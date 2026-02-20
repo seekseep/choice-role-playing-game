@@ -13,21 +13,34 @@ export function createStartStep(template, { onStart }) {
 export function createActionStep(template, { step, onStepSubmit }) {
   const fragment = template.content.cloneNode(true);
 
-  fragment.querySelector('.state-hit-point').textContent = step.stateView.hitPoint;
-  fragment.querySelector('.state-money').textContent = step.stateView.money;
-  fragment.querySelector('.state-score').textContent = step.stateView.score;
-
+  fragment.querySelector('.event-emoji').textContent = step.emoji || '';
   fragment.querySelector('.message').textContent = step.message || '';
   fragment.querySelector('.question').textContent = step.question;
 
   const choicesElement = fragment.querySelector('.choices');
+  const resultElement = fragment.querySelector('.choice-result');
   const buttonTemplate = choicesElement.querySelector('.choice-button');
   for (const choice of step.choices) {
     const button = buttonTemplate.cloneNode(true);
-    button.textContent = choice.label;
+    button.querySelector('.choice-emoji').textContent = choice.emoji;
+    button.querySelector('.choice-content').textContent = choice.content;
     button.addEventListener('click', () => {
       choicesElement.querySelectorAll('.choice-button').forEach((b) => { b.disabled = true; });
-      onStepSubmit(choice.id);
+      onStepSubmit(choice.id, ({ message, delta }) => {
+        resultElement.querySelector('.choice-result-message').textContent = message;
+        const deltaElement = resultElement.querySelector('.choice-result-delta');
+        const entries = [
+          { label: '♥️', value: delta.hitPoint },
+          { label: '💰️', value: delta.money },
+          { label: '⭐️', value: delta.score },
+        ];
+        for (const { label, value } of entries) {
+          const span = document.createElement('span');
+          span.textContent = `${label}${value >= 0 ? '+' : ''}${value}`;
+          deltaElement.appendChild(span);
+        }
+        resultElement.classList.remove('d-none');
+      });
     });
     choicesElement.appendChild(button);
   }
@@ -38,10 +51,6 @@ export function createActionStep(template, { step, onStepSubmit }) {
 
 export function createEndStep(template, { state, result, onRetry }) {
   const fragment = template.content.cloneNode(true);
-
-  fragment.querySelector('.state-hit-point').textContent = state.hitPoint;
-  fragment.querySelector('.state-money').textContent = state.money;
-  fragment.querySelector('.state-score').textContent = state.score;
 
   const messageElement = fragment.querySelector('.result-message');
   const detailElement = fragment.querySelector('.result-detail');

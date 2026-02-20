@@ -9,6 +9,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     id: { type: 'string' },
     placeId: { type: 'string' },
+    emoji: { type: 'string' },
     message: { type: 'string' },
     question: { type: 'string' },
     choices: {
@@ -17,10 +18,12 @@ const RESPONSE_SCHEMA = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          label: { type: 'string' },
+          emoji: { type: 'string' },
+          content: { type: 'string' },
           result: {
             type: 'object',
             properties: {
+              message: { type: 'string' },
               delta: {
                 type: 'object',
                 properties: {
@@ -38,16 +41,15 @@ const RESPONSE_SCHEMA = {
                 },
                 required: ['hitPoint', 'money', 'score', 'move'],
               },
-              message: { type: 'string' },
             },
-            required: ['delta', 'message'],
+            required: ['message', 'delta'],
           },
         },
-        required: ['id', 'label', 'result'],
+        required: ['id', 'emoji', 'content', 'result'],
       },
     },
   },
-  required: ['id', 'placeId', 'message', 'question', 'choices'],
+  required: ['id', 'placeId', 'emoji', 'message', 'question', 'choices'],
 };
 
 function computeValidMoves(position, world) {
@@ -68,7 +70,7 @@ function computeValidMoves(position, world) {
 function buildPrompt(state, terrain, placeId, validMoves, history) {
   const historyText = (history || [])
     .slice(-3)
-    .map(h => `- ${h.message}（選択: ${h.chosenLabel}）`)
+    .map(h => `- ${h.message}（選択: ${h.chosenContent}）`)
     .join('\n');
 
   return `あなたは選択型RPGゲームのイベント生成AIです。
@@ -89,8 +91,12 @@ ${historyText || 'なし（冒険の始まり）'}
 ${validMoves.map(m => `{ "dx": ${m.dx}, "dy": ${m.dy} }`).join('\n')}
 
 各選択肢は異なるmoveの値を使ってください。
-選択肢は必ず2つ生成してください。
+選択肢は必ず4つ生成してください。
 placeIdは "${placeId}" にしてください。
+
+## 絵文字
+- イベント全体にそのシーンを表す絵文字を1つ付けてください（emoji）
+- 各選択肢にもその行動を表す絵文字を1つ付けてください（choices[].emoji）
 
 ## 数値の制約
 - hitPointの変動は -3 から +3 の範囲
@@ -111,23 +117,31 @@ function validateMoves(event, validMoves) {
 }
 
 export async function POST(request) {
-  const { state, terrain, placeId, world, history } = await request.json();
-  const validMoves = computeValidMoves(state.position, world);
-  const prompt = buildPrompt(state, terrain, placeId, validMoves, history);
+  try {
+    const { state, terrain, placeId, world, history } = await request.json();
+    const validMoves = computeValidMoves(state.position, world);
+    const prompt = buildPrompt(state, terrain, placeId, validMoves, history);
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA,
-    },
-  });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: RESPONSE_SCHEMA,
+      },
+    });
 
-  const result = await model.generateContent(prompt);
-  const event = JSON.parse(result.response.text());
+    const result = await model.generateContent(prompt);
+    const event = JSON.parse(result.response.text());
 
-  validateMoves(event, validMoves);
+    validateMoves(event, validMoves);
 
-  return Response.json(event);
+    return Response.json(event);
+  } catch (error) {
+    console.error('API error:', error);
+    return Response.json(
+      { error: error.message || 'Unknown error' },
+      { status: 500 },
+    );
+  }
 }

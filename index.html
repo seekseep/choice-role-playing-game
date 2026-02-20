@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Choice Role-Playing Game</title>
+    <title>選んで進むRPG</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
@@ -8,15 +8,28 @@
 
     <div class="container">
       <div class="py-4">
-        <h1>Choice Role-Playing Game</h1>
+        <h1>選んで進むRPG</h1>
       </div>
       <div class="row">
         <div class="col">
           <div id="steps-container"></div>
+          <div id="loading-indicator" class="card mb-4 d-none">
+            <div class="card-body text-center">
+              <div class="spinner-border" role="status"></div>
+              <p class="mt-2 text-muted loading-message"></p>
+            </div>
+          </div>
         </div>
         <div class="col-4">
           <div class="card sticky-top" style="top: 1rem;">
             <canvas id="map-canvas" width="200" height="200"></canvas>
+            <div id="player-status" class="card-body d-none">
+              <div class="d-flex justify-content-around">
+                <div><span>♥️</span><span id="status-hit-point"></span></div>
+                <div><span>💰️</span><span id="status-money"></span></div>
+                <div><span>⭐️</span><span id="status-score"></span></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -34,15 +47,17 @@
     <template id="action-step-template">
       <div class="card mb-4">
         <div class="card-body">
-          <div class="row mb-3">
-            <div class="col"><span>♥️</span><span class="state-hit-point"></span></div>
-            <div class="col"><span>💰️</span><span class="state-money"></span></div>
-            <div class="col"><span>⭐️</span><span class="state-score"></span></div>
-          </div>
+          <div class="text-center mb-2 event-emoji" style="font-size: 3rem;"></div>
           <p class="card-text text-muted mb-2 message"></p>
           <h2 class="card-title mb-4 question"></h2>
           <div class="d-flex flex-column gap-2 choices">
-            <button class="text-start btn btn-outline-secondary d-block choice-button"></button>
+            <button class="text-start btn btn-outline-secondary d-block choice-button">
+              <span class="choice-emoji me-2"></span><span class="choice-content"></span>
+            </button>
+          </div>
+          <div class="mt-3 d-none choice-result">
+            <p class="choice-result-message"></p>
+            <div class="d-flex gap-3 text-muted small choice-result-delta"></div>
           </div>
         </div>
       </div>
@@ -51,11 +66,6 @@
     <template id="end-step-template">
       <div class="card mb-4">
         <div class="card-body">
-          <div class="row mb-3">
-            <div class="col"><span>♥️</span><span class="state-hit-point"></span></div>
-            <div class="col"><span>💰️</span><span class="state-money"></span></div>
-            <div class="col"><span>⭐️</span><span class="state-score"></span></div>
-          </div>
           <h2 class="card-title mb-3 result-message"></h2>
           <p class="card-text text-muted mb-3 result-detail"></p>
           <button class="btn btn-primary retry-button">やりなおす</button>

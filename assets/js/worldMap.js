@@ -2,13 +2,13 @@ import { TERRAIN_COLORS } from './constants.js';
 
 export function renderWorldMap(canvas, world, position) {
   const ctx = canvas.getContext('2d');
-  const { width, height, grid, goal } = world;
+  const { width, height, areas, goal } = world;
   const tileW = canvas.width / width;
   const tileH = canvas.height / height;
 
   for (let r = 0; r < height; r++) {
     for (let c = 0; c < width; c++) {
-      ctx.fillStyle = TERRAIN_COLORS[grid[r][c].terrain];
+      ctx.fillStyle = TERRAIN_COLORS[areas[r][c].terrain];
       ctx.fillRect(c * tileW, r * tileH, tileW, tileH);
     }
   }
